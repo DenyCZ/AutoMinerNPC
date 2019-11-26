@@ -2,3 +2,6 @@ name: AutoMinerNPC
 version: 1.0
 main: cz.denyk.autominernpc.Main
 api-version: 1.8.8
+commands:
+  autominer:
+    description: AutoMiner main command
