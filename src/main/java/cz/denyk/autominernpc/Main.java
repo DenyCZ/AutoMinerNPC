@@ -20,11 +20,6 @@ public class Main extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
-        if(getServer().getPluginManager().getPlugin("Citizens") == null || getServer().getPluginManager().getPlugin("Citizens").isEnabled() == false) {
-            getLogger().log(Level.SEVERE, "Citizens 2.0 not found or not enabled");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
         config = new Configuration(getInstance(), "config");
         storage = new DataStorage();
 
@@ -34,7 +29,7 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
-
+        //Save all
     }
 
 
@@ -59,9 +54,4 @@ public class Main extends JavaPlugin {
     public DataStorage getDataStorage() {
         return storage;
     }
-
-
-    //User uses command /autominer create
-    //User must define position 1 and 2 /autominer setpos1 /autominer setpos2
-    //NPC spawns at first location and starts mining towards second position
 }
