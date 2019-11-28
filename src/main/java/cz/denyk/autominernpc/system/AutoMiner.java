@@ -1,14 +1,25 @@
 package cz.denyk.autominernpc.system;
 
+import cz.denyk.autominernpc.Main;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class AutoMiner {
+
+    private Main instance;
 
     private String name;
     private Player owner;
@@ -19,11 +30,24 @@ public class AutoMiner {
 
     private Location lastPosition;
     private Queue<Block> blockQueue = new ConcurrentLinkedQueue<>();
+    private ArmorStand as;
+
+    private Map<EnumUpgrades, Integer> upgrades = new HashMap<>();
 
     private boolean isWorking;
 
     public AutoMiner() {
         isWorking = false;
+
+        instance = Main.getInstance();
+        upgrades.put(EnumUpgrades.KEY, 1);
+        upgrades.put(EnumUpgrades.TOKEN, 1);
+    }
+
+    public void addLevel(EnumUpgrades upgrade) {
+        if(upgrades.containsKey(upgrade)) {
+            upgrades.put(upgrade, upgrades.get(upgrade)+1);
+        }
     }
 
     public void work() {
@@ -46,7 +70,19 @@ public class AutoMiner {
 
         Location startPosition = new Location(pos1.getWorld(), maxX, maxY, maxZ);
 
-        ArmorStand as;
+        if(lastPosition != null) {
+            startPosition = lastPosition;
+        }
+
+        as = (ArmorStand)startPosition.getWorld().spawnEntity(startPosition.add(0,0.5,0), EntityType.ARMOR_STAND);
+        as.setBasePlate(false);
+        as.setArms(true);
+        as.setGravity(false);
+        as.setSmall(true);
+        as.setVisible(true);
+        as.setCanPickupItems(false);
+        as.setCustomName(name);
+        as.setCustomNameVisible(true);
 
         for (double y = maxY; y >= minY; y--) {
             for (double x = maxX; x >= minX; x--) {
@@ -60,15 +96,45 @@ public class AutoMiner {
             }
         }
 
-        while(blockQueue.size() > 0) {
-            Block b = blockQueue.poll();
-            System.out.println("Trying to break " + b.getLocation().toString());
-            b.breakNaturally();
-        }
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if(blockQueue.size() > 0) {
+                    Block block = blockQueue.poll();
+                    as.teleport(block.getLocation().add(0.5,1,0.5));
+                    lastPosition = as.getLocation();
+                    dropBlock(block);
+                } else {
+                    as.remove();
+                    cancel();
+                }
+
+            }
+        }.runTaskTimer(instance, 0, 10);
 
         setWorking(false);
 
 
+    }
+
+    private void dropBlock(Block block) {
+        final int random = ThreadLocalRandom.current().nextInt(100);
+
+        if(random <= 10) {
+            owner.sendMessage("Dropped key");
+            //Execute command to add a key to a player
+            return;
+        }
+
+        if(random <= 20) {
+            owner.sendMessage("Dropped token");
+            //Execute command to add a token to a player
+            return;
+        }
+    }
+
+    public int getLevel(EnumUpgrades upgrade) {
+        return upgrades.containsKey(upgrade) ? upgrades.get(upgrade) : 0;
     }
 
 

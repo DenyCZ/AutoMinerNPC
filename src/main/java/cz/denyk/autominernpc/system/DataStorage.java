@@ -22,8 +22,18 @@ public class DataStorage {
         }
     }
 
-    public boolean hasAutoMiner(UUID playerUUID) {
-        return minerOwners.containsKey(playerUUID);
+    public boolean hasAutoMiner(UUID playerUUID, String name) {
+        if(minerOwners.containsKey(playerUUID)) {
+            List<AutoMiner> miners = minerOwners.get(playerUUID);
+
+            for (AutoMiner miner: miners) {
+                if(miner.getName().equalsIgnoreCase(name)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public AutoMiner getAutoMiner(UUID playerUUID, String nameOfMiner) {

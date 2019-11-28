@@ -2,12 +2,17 @@ package cz.denyk.autominernpc.commands;
 
 import cz.denyk.autominernpc.Main;
 import cz.denyk.autominernpc.system.AutoMiner;
+import cz.denyk.autominernpc.system.EnumUpgrades;
+import cz.denyk.autominernpc.utils.Configuration;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+
+import java.util.Set;
 
 public class CmdAutoMinerCreate implements CommandExecutor {
 
@@ -31,16 +36,17 @@ public class CmdAutoMinerCreate implements CommandExecutor {
                 return false;
             }
 
-            if(Main.getInstance().getDataStorage().hasAutoMiner(player.getUniqueId())) {
-                player.sendMessage("You already have an autominer!");
+            if(instance.getDataStorage().amountOfMiners(player.getUniqueId()) >= instance.getConfig().getInt("max-autominers")) {
+                player.sendMessage("You already have maximum of miners!");
                 return false;
             }
 
-            if(instance.getDataStorage().amountOfMiners(player.getUniqueId()) >= instance.getConfig().getInt("autominer.max")) {
-                player.sendMessage("You already have maximum of miners!");
-            }
-
             String name = args[1];
+
+            if(instance.getDataStorage().hasAutoMiner(player.getUniqueId(), name)) {
+                player.sendMessage("An autominer with this name already exists");
+                return false;
+            }
 
             AutoMiner miner = new AutoMiner();
             miner.setName(name);
@@ -136,6 +142,54 @@ public class CmdAutoMinerCreate implements CommandExecutor {
             miner.setWorking(false);
         } else if(args[0].equalsIgnoreCase("list")) {
             player.sendMessage(instance.getDataStorage().getMiners(player.getUniqueId()));
+        } else if(args[0].equalsIgnoreCase("upgrade")) {
+            if(args.length < 3) {
+                player.sendMessage("Usage is /autominer upgrade {name} {upgradename}");
+                return false;
+            }
+
+            String name = args[1];
+
+            AutoMiner miner = instance.getDataStorage().getAutoMiner(player.getUniqueId(), name);
+            if(miner == null) {
+                player.sendMessage("This miner doesnt exist");
+                return false;
+            }
+
+            String upgradeName = args[2];
+
+            EnumUpgrades upgrade = null;
+
+            for (EnumUpgrades enumUpgrade : EnumUpgrades.values()) {
+                if(enumUpgrade.getUpgradeName().equalsIgnoreCase(upgradeName)) {
+                    upgrade = enumUpgrade;
+                    break;
+                }
+            }
+
+            if(upgrade == null) {
+                player.sendMessage("Upgrade was not found, only possible updates are KEY / TOKEN");
+                return false;
+            }
+
+            int level = miner.getLevel(upgrade)+1;
+            System.out.println(level);
+
+            if(level > instance.getConfig().getInt("upgrades."+upgradeName.toLowerCase()+"-max-level")) {
+                player.sendMessage("This is already on maximum level");
+                return false;
+            }
+
+            if(instance.getConfig().getConfigurationSection("upgrades."+upgradeName.toLowerCase()+"-price").contains("level-"+level)) {
+                int price = instance.getConfig().getInt("upgrades."+upgradeName.toLowerCase()+"-price.level-"+level);
+
+                //If player has enough money
+                //Withdraw money
+
+                miner.addLevel(upgrade);
+
+            }
+
         }
 
 
