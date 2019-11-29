@@ -118,27 +118,29 @@ public class AutoMiner {
     }
 
     private void dropBlock(Block block) {
-        final int random = ThreadLocalRandom.current().nextInt(100);
+        int random = ThreadLocalRandom.current().nextInt(100);
 
-        if(random <= 10) {
-            owner.sendMessage("Dropped key");
-            //Execute command to add a key to a player
-            return;
+        if(getLevel(EnumUpgrades.TOKEN) < random) {
+            String command = String.format("te add %s %d", getOwner().getName(), instance.getTools().amountToDrop(EnumUpgrades.TOKEN, getLevel(EnumUpgrades.TOKEN)));
+            Bukkit.dispatchCommand(Bukkit.getServer().getConsoleSender(), command);
         }
 
-        if(random <= 20) {
-            owner.sendMessage("Dropped token");
-            //Execute command to add a token to a player
-            return;
+        random = ThreadLocalRandom.current().nextInt(100);
+
+        if(getLevel(EnumUpgrades.KEY) < random) {
+            String command = String.format("cc give p Mine %d %s", instance.getTools().amountToDrop(EnumUpgrades.KEY, getLevel(EnumUpgrades.KEY)), getOwner().getName());
+            Bukkit.dispatchCommand(Bukkit.getServer().getConsoleSender(), command);
         }
+
+        block.breakNaturally();
     }
+
+    //Getters
 
     public int getLevel(EnumUpgrades upgrade) {
         return upgrades.containsKey(upgrade) ? upgrades.get(upgrade) : 0;
     }
 
-
-    //Getters
     public void setName(String value) {
         name = value;
     }

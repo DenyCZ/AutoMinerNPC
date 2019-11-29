@@ -4,6 +4,7 @@ import cz.denyk.autominernpc.Main;
 import cz.denyk.autominernpc.system.AutoMiner;
 import cz.denyk.autominernpc.system.EnumUpgrades;
 import cz.denyk.autominernpc.utils.Configuration;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -12,6 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
+import java.math.BigInteger;
 import java.util.Set;
 
 public class CmdAutoMinerCreate implements CommandExecutor {
@@ -20,6 +22,7 @@ public class CmdAutoMinerCreate implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
+
         if(!(commandSender instanceof Player) || args.length < 1) {
             commandSender.sendMessage("Please use /autominer help");
             return false;
@@ -172,22 +175,26 @@ public class CmdAutoMinerCreate implements CommandExecutor {
                 return false;
             }
 
-            int level = miner.getLevel(upgrade)+1;
-            System.out.println(level);
+            int level = miner.getLevel(upgrade);
 
-            if(level > instance.getConfig().getInt("upgrades."+upgradeName.toLowerCase()+"-max-level")) {
-                player.sendMessage("This is already on maximum level");
+            if(level >= 100) {
+                player.sendMessage("Level for this upgrade is already on maximum level");
                 return false;
             }
 
-            if(instance.getConfig().getConfigurationSection("upgrades."+upgradeName.toLowerCase()+"-price").contains("level-"+level)) {
-                int price = instance.getConfig().getInt("upgrades."+upgradeName.toLowerCase()+"-price.level-"+level);
-
-                //If player has enough money
-                //Withdraw money
-
+            System.out.println(level);
+            double moneyForNextLevel = instance.getTools().getPriceForLevel(level+1);
+            System.out.println(moneyForNextLevel);
+            System.out.println(player == null);
+            System.out.println(instance.getEcon() == null);
+            EconomyResponse response = instance.getEcon().withdrawPlayer(player, moneyForNextLevel);
+            if(response.transactionSuccess()) {
                 miner.addLevel(upgrade);
-
+                player.sendMessage("Upgrade was succesfull.");
+                player.sendMessage(String.format("%d $ was taken", moneyForNextLevel));
+            } else {
+                player.sendMessage("You dont have enough money");
+                return false;
             }
 
         }
